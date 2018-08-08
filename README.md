@@ -8,4 +8,8 @@
 python3+flask框架，前端html+css+bootstrap框架+js+jq+ajax,前端弹窗用的是sweetalert2，注册界面短信验证码调用的是阿里大鱼短信接口，图形验证码是用
 python中PIL图形处理工具画的，验证码缓存是用的memcache,用celery+redis来异步完成发送短信验证码和邮箱验证码操作，用户上传的图片调用的七牛接口等等
 
-##使用方法  
+## 使用方法
+* 克隆到本地
+```
+https://github.com/zjy959/BBS.git
+```

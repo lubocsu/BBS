@@ -1,0 +1,32 @@
+{% from 'commom/macros.html' import static %}
+{% extends 'front/front_common.html' %}
+{% block title %}
+    ZZ论坛登录
+{% endblock %}
+{% block head %}
+    <script src="{{ static('front/js/front_signin.js') }}"></script>
+{% endblock %}
+{% block h2_block -%}
+    ZZ论坛登录
+{%- endblock %}
+
+{% block signinbox -%}
+    <div class="form-group">
+        <input type="text" class="form-control" name="telephone" placeholder="手机号码">
+    </div>
+    <div class="form-group">
+        <input type="password" class="form-control" name="password" placeholder="密码">
+    </div>
+    <div class="checkbox">
+        <label >
+            <input type="checkbox" name="remember" value="1">记住我
+        </label>
+    </div>
+    <div class="form-group">
+        <button class="btn btn-warning btn-block" id="submit-btn">立即登录</button>
+    </div>
+    <div class="form-group">
+        <a href="{{ url_for('front.signup') }}" class="signup-link">没有账号？立即注册</a>
+        <a href="#" class="resetpwd-link" style="float: right">找回密码</a>
+    </div>
+{%- endblock %}

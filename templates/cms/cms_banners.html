@@ -1,0 +1,103 @@
+{% extends "cms/cms_common.html"%}
+{% from "commom/macros.html" import static %}
+{% block title -%}
+    轮播图管理
+{%- endblock %}
+{% block title_1 -%}
+    首页
+{%- endblock %}
+{% block title_2 -%}
+    {{ self.title() }}
+{%- endblock %}
+{% block head %}
+    <script src="http://cdn.staticfile.org/plupload/2.1.1/moxie.js"></script>
+    <script src="http://cdn.staticfile.org/plupload/2.1.1/plupload.dev.js"></script>
+    <script src="https://cdn.staticfile.org/qiniu-JS-SDK/1.0.14-beta/qiniu.min.js"></script>
+    <script src="{{ static('common/zzqiniu.js') }}"></script>
+    <script src="{{ static("cms/js/banners.js") }}"></script>
+    <style>
+        .top-box button{
+            float: right;
+        }
+    </style>
+{% endblock %}
+{% block main_center %}
+    <div class="top-box">
+        <button class="btn btn-warning" data-toggle="modal" data-target="#banner-dialog">添加轮播图</button>
+    </div>
+    <table class="table table-bordered table1">
+        <thead>
+            <tr>
+                <th>名称</th>
+                <th>图片链接</th>
+                <th>跳转链接</th>
+                <th>优先级</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for banner in banners %}
+{#                将后台轮播图数据绑定到tr标签上#}
+                <tr class="success" data-name="{{ banner.name }}" data-image="{{ banner.image_b }}" data-link="{{ banner.link_url }}"
+                    data-priority="{{ banner.priority }} " data-id="{{ banner.id }}">
+                    <td>{{ banner.name }}</td>
+                    <td><a href="{{ banner.image_b }}" target="_blank">{{ banner.image_b }}</a></td>
+                    <td><a href="{{ banner.link_url }}" target="_blank">{{ banner.link_url }}</a></td>
+                    <td>{{ banner.priority }}</td>
+                    <td>{{ banner.creat_time }}</td>
+                    <td>
+                        <button class="btn-default btn-xs edit-banner-btn" >编辑</button>
+                        <button class="btn-danger btn-xs delete-banner-btn">删除</button>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="banner-dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" data-backdrop="static">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">轮播图</h4>
+          </div>
+          <div class="modal-body">
+              <form action="" class="form-horizontal">
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">名称：</label>
+                      <div class="col-sm-10">
+                          <input type="text" class="form-control" name="name" placeholder="轮播图名称">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">图片：</label>
+                      <div class="col-sm-7">
+                          <input type="text" class="form-control" name="image_b" placeholder="轮播图图片">
+                      </div>
+                      <button class="btn btn-info col-sm-2" id="upload-btn">添加图片</button>
+                  </div>
+                  <div class="form-group">
+                      <label class="col-sm-2 control-label">链接：</label>
+                      <div class="col-sm-10">
+                          <input type="text" class="form-control" name="link_url" placeholder="跳转链接">
+                      </div>
+                  </div>
+                  <div class="form-group" >
+                      <label class="col-sm-2 control-label">权重：</label>
+                      <div class="col-sm-10">
+                          <input type="number" class="form-control" name="priority" placeholder="优先级">
+                      </div>
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            <button type="button" class="btn btn-primary" id="save-banner-btn">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endblock %}

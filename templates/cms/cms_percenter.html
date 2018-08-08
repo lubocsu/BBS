@@ -1,0 +1,62 @@
+{% extends 'cms/cms_common.html' %}
+{% block title %}
+    个人信息
+{% endblock %}
+{% block title_1 %}
+    首页
+{% endblock %}
+{% block title_2 %}
+    {{ self.title() }}
+{% endblock %}
+{% block head %}
+    <style>
+        .table_g{
+            width: 500px;
+            height: 400px;
+        }
+    </style>
+{% endblock %}
+{% block main_center %}
+    {% set user = g.cms_user %}
+    <div class="table_g">
+    <table class="table table-bordered">
+        <tbody>
+            <tr>
+                <td>用户名：</td>
+                <td>{{ user.username }}</td>
+            </tr>
+             <tr>
+                <td>邮箱：</td>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <td>角色：</td>
+                <td>
+{#                    一个用户可能有多个角色，需要遍历一下#}
+                    {% for role in user.roles %}
+                        {{ role.name }}
+{#                        判断如果不是最后一个则加逗号隔开#}
+                        {% if not loop.last %},{% endif %}
+                    {% endfor %}
+                    
+                </td>
+            </tr>
+            <tr>
+                <td>权限：</td>
+                <td>
+                    {% for role in user.roles %}
+                        {{ role.desc }}
+                        {% if not loop.last %}/{% endif %}
+                    {% endfor %}
+
+                </td>
+            </tr>
+            <tr>
+                <td>加入时间：</td>
+                <td>{{ user.join_time }}</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+{% endblock %}

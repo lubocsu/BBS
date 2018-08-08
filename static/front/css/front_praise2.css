@@ -1,0 +1,26 @@
+.praise2{
+    width:40px;
+    height:40px;
+    margin: 0px auto;
+    cursor: pointer;
+    font-size: 12px;
+    text-align:center;
+    position: relative;
+}
+#praise2{
+    display:block;
+    width:40px;
+    height:40px;
+    margin:0 auto;
+}
+#praise-txt2{
+    height:25px;
+    line-height:25px;
+    display: block;
+}
+.praise2 img{
+    width:40px;
+    height:40px;
+    display:block;
+    margin: 0 auto;
+}

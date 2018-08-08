@@ -1,0 +1,131 @@
+{% from 'commom/macros.html' import static%}
+{% extends 'front/front_common.html' %}
+{% block title -%}
+    ZZ论坛注册
+{%- endblock %}
+{% block head -%}
+    <link rel="stylesheet" href="{{ static('front/css/front_signup.css') }}">
+    <script src="{{ static('front/js/front_signup.js') }}"></script>
+{%- endblock %}
+{% block h2_block -%}
+    ZZ论坛注册
+{%- endblock %}
+
+{% block signinbox %}
+    <div class="form-group">
+               <div class="input-group">
+                    <input type="text" class="form-control" name="telephone" placeholder="手机号码">
+                   <span class="input-group-btn">
+                       <button  id="sms-captcha-btn" class="btn btn-default">发送验证码</button>
+                   </span>
+               </div>
+            </div>
+            <div class="form-group">
+               <input type="text" class="form-control" name="sms_captcha" placeholder="短信验证码">
+            </div>
+            <div class="form-group">
+               <input type="text" class="form-control" name="username" placeholder="用户名">
+            </div>
+            <div class="form-group">
+               <input type="password" class="form-control" name="password1" placeholder="密码">
+            </div>
+            <div class="form-group">
+               <input type="password" class="form-control" name="password2" placeholder="确认密码">
+            </div>
+            <div class="form-group">
+               <div class="input-group">
+                    <input type="text" class="form-control" name="graph_captcha" placeholder="图形验证码">
+                   <span class="input-group-addon captcha-addon">
+                        <img id="captcha-img" class="captcha-img" src="{{ url_for('common.graph_captcha') }}" alt="">
+                   </span>
+               </div>
+            </div>
+            <div class="form-group">
+                <span style="display: none" id="return_to">{{ return_to }}</span>
+                <button class="btn btn-warning btn-block" id="submit-btn">
+                    立即注册
+                </button>
+            </div>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{#<!DOCTYPE html>#}
+{#<html lang="en">#}
+{#<head>#}
+{#    <meta charset="UTF-8">#}
+{#    <meta name="csrf-token" content="{{ csrf_token() }}">#}
+{#    <title>Title</title>#}
+{#    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>#}
+{#    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">#}
+{#    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>#}
+{#    <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>#}
+{#    <script src="{{ static('front/js/front_signup.js') }}"></script>#}
+{#    <script src="{{ static("common/sweetalert2.all.min.js") }}"></script>#}
+{#    <script src="{{ static("common/sweetalert2.min.css") }}"></script>#}
+{#    <link rel="stylesheet" href="{{ static('front/css/front_signup.css') }}">#}
+{#    <script src="{{ static("common/zzajax.js") }}"></script>#}
+{#    <script src="{{ static('common/param.js') }}"></script>#}
+{#</head>#}
+{#<body>#}
+{#    <div class="outer-box">#}
+{#        <div class="logo-box">#}
+{#            <a href="/">#}
+{#                <img src="{{ static('images/4.png') }}" alt="">#}
+{#            </a>#}
+{#        </div>#}
+{#        <h2 class="b-signup">zz论坛注册</h2>#}
+{#        <div class="bbox">#}
+{#            <div class="form-group">#}
+{#               <div class="input-group">#}
+{#                    <input type="text" class="form-control" name="telephone" placeholder="手机号码">#}
+{#                   <span class="input-group-btn">#}
+{#                       <button  id="sms-captcha-btn" class="btn btn-default">发送验证码</button>#}
+{#                   </span>#}
+{#               </div>#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#               <input type="text" class="form-control" name="sms_captcha" placeholder="短信验证码">#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#               <input type="text" class="form-control" name="username" placeholder="用户名">#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#               <input type="password" class="form-control" name="password1" placeholder="密码">#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#               <input type="password" class="form-control" name="password2" placeholder="确认密码">#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#               <div class="input-group">#}
+{#                    <input type="text" class="form-control" name="graph_captcha" placeholder="图形验证码">#}
+{#                   <span class="input-group-addon captcha-addon">#}
+{#                        <img id="captcha-img" class="captcha-img" src="{{ url_for('common.graph_captcha') }}" alt="">#}
+{#                   </span>#}
+{#               </div>#}
+{#            </div>#}
+{#            <div class="form-group">#}
+{#                <span style="display: none" id="return_to">{{ return_to }}</span>#}
+{#                <button class="btn btn-warning btn-block" id="submit-btn">#}
+{#                    立即注册#}
+{#                </button>#}
+{#            </div>#}
+{#        </div>#}
+{#</body>#}
+{#</html>#}

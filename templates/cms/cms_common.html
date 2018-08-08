@@ -1,0 +1,144 @@
+{% from "commom/macros.html" import static%}
+<!DOCTYPE>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}{% endblock %}</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+{#    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css">#}
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static',filename='cms/css/bootstrap.min.css') }}" >
+{#    <script type="text/javascript" src="{{ url_for('static',filename='cms/js/jquery-1.8.3.min.js' ) }}"></script>#}
+    <script type="text/javascript" src="{{ url_for('static',filename='cms/js/menu.js' ) }}"></script>
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static',filename='cms/css/style.css') }}" >
+{#ajax对csef_token导入请求头的封装#}
+    <script src="{{ static("common/zzajax.js") }}"></script>
+{#    导入弹出框模版sweetalert2#}
+    <script src="{{ static("common/sweetalert2.all.min.js") }}"></script>
+    <script src="{{ static("common/sweetalert2.min.css") }}"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+<div class="top"></div>
+<div id="header">
+	<div class="logo">***后台管理系统</div>
+	<div class="navigation">
+		<ul>
+		 	<li>欢迎您！</li>
+			<li><a href="{{ url_for('cms.percenter') }}">{{ g.cms_user.username }}</a></li>
+			<li><a href="{{ url_for('cms.logout') }}">退出</a></li>
+		</ul>
+	</div>
+</div>
+<div id="content">
+	<div class="left_menu">
+        <ul id="nav_dot">
+                <li class="index">
+                 <div class="index">
+                   <a href='{{ url_for('cms.index') }}' class="a1"><span class="sp"></span>首页</a>
+                 </div>
+                </li>
+
+             <li id="li1">
+              <h4 class="M1"><span></span>个人中心</h4>
+              <div class="list-item none">
+                <a href='{{ url_for('cms.percenter') }}'>个人信息</a>
+                <a href='{{ url_for('cms.changepwd') }}'>修改密码</a>
+                <a href='{{ url_for('cms.resetemail') }}'>修改邮箱</a>
+              </div>
+             </li>
+
+            {% set cms_user = g.cms_user %}
+            {% if cms_user.has_permission(CMSpermission.POSTER) %}
+             <li id="li2">
+                  <h4 class="M2"><span></span>帖子相关</h4>
+                  <div class="list-item none">
+                    <a href='{{ url_for('cms.posts') }}'>帖子管理</a>
+                    <a href=''>工单处理2</a>
+                   </div>
+             </li>
+            {% endif %}
+
+            {% if cms_user.has_permission(CMSpermission.COMMENTER) %}
+              <li id="li3">
+                  <h4 class="M3"><span></span>评论相关</h4>
+                  <div class="list-item none">
+                    <a href='{{ url_for('cms.comments') }}'>评论管理</a>
+                    <a href=''>基础教学2</a>
+                  </div>
+              </li>
+            {% endif %}
+            {% if cms_user.has_permission(CMSpermission.MODERATOR) %}
+                <li id="li4">
+                  <h4 class="M4"><span></span>板块相关</h4>
+                  <div class="list-item none">
+                    <a href='{{ url_for('cms.boards') }}'>板块管理</a>
+                    <a href='{{ url_for("cms.banners") }}'>轮播图</a>
+                  </div>
+                </li>
+            {% endif %}
+            {% if cms_user.has_permission(CMSpermission.FRONTUSER) %}
+             <li id="li5">
+                  <h4 class="M5"><span></span>前台用户相关</h4>
+                  <div class="list-item none">
+                    <a href='{{ url_for('cms.fusers') }}'>前台用户管理</a>
+                    <a href=''>调研问卷2</a>
+                  </div>
+             </li>
+            {% endif %}
+            {% if cms_user.has_permission(CMSpermission.CMSUSER) %}
+                <li id="li6">
+                      <h4  class="M6"><span></span>CMS用户相关</h4>
+                      <div class="list-item none">
+                        <a href='{{ url_for('cms.cusers') }}'>用户管理</a>
+                        <a href=''>数据统计2</a>
+                      </div>
+                </li>
+            {% endif %}
+            {% if cms_user.has_permission(CMSpermission.ADMINER) %}
+                <li id="li7">
+                      <h4  class="M7"><span></span>CMS组相关</h4>
+                      <div class="list-item none">
+                        <a href='{{ url_for('cms.croles') }}'>组管理</a>
+                        <a href=''>奖励管理2</a>
+                      </div>
+                </li>
+            {% endif %}
+
+{#				<li>#}
+{#          <h4  class="M9"><span></span>内容管理</h4>#}
+{#        </li>#}
+{#				<li>#}
+{#          <h4   class="M10"><span></span>系统管理</h4>#}
+{#          <div class="list-item none">#}
+{#            <a href=''>系统管理1</a>#}
+{#            <a href=''>系统管理2</a>#}
+{#            <a href=''>系统管理3</a>#}
+{#          </div>#}
+{#        </li>#}
+        </ul>
+		</div>
+		<div class="m-right">
+			<div class="right-nav">
+					<ul>
+							<li><img src="{{ url_for('static',filename='images/home.png' ) }}"></li>
+								<li style="margin-left:25px;">您当前的位置：</li>
+								<li><a href="{{ url_for('cms.index') }}">{% block title_1 %}{% endblock %}</a></li>
+								<li>></li>
+								<li><a href="#">{% block title_2 %}{% endblock %}</a></li>
+						</ul>
+			</div>
+			<div class="main">
+                {% block main_center %}{% endblock %}
+			</div>
+		</div>
+</div>
+<div class="bottom"></div>
+<div id="footer"><p>Copyright©  2015 版权所有 京ICP备xxxxxx号-10</p></div>
+<script>navList(12);</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{% extends "front/front_base.html" %}
+{% from 'commom/macros.html' import static%}
+{% block title %}
+{{ post.title }}
+{% endblock %}
+{% block head %}
+    <script src="{{ static("ueditor/ueditor.config.js") }}"></script>
+    <script src="{{ static("ueditor/ueditor.all.min.js") }}"></script>
+    <script src="{{ static("front/js/front_pdatail.js") }}"></script>
+    <script src="{{ static("front/js/front_praise.js") }}"></script>
+    <link rel="stylesheet" href="{{ static("front/css/front_pdatail.css") }}">
+    <link rel="stylesheet" href="{{ static("front/css/front_praise.css") }}">
+    <link rel="stylesheet" href="{{ static("front/css/front_praise2.css") }}">
+
+{% endblock %}
+
+{% block body %}
+    <div class="lg-container">
+        <div class="post-container">
+            <h2>{{ post.title }}</h2>
+            <p class="post-info-group">
+                <span>发表时间:{{ post.create_time }}</span>
+                <span>作者:{{ post.author.username }}</span>
+                <span>所属板块:{{ post.board.name }}</span>
+                <span>阅读数：0</span>
+                <span>评论数：
+                {% for comment in post.comments %}
+                   {% if loop.last %}
+                       {{ loop.length }}
+                   {% endif %}
+                {% endfor %}
+                </span>
+            </p>
+            <article class="post-content" id="post-content" data-id="{{ post.id }}">
+                {{ post.content|safe}}
+            </article>
+        </div>
+{#        赞盒子#}
+        {% if g.Front_user %}
+            <div class="praise" data-id="{{ post.id }}" data-fuser="{{ g.Front_user.id }}">
+                {% if praise.post_id == post.id %}
+                    <span id="praise"><img src="/static/images/yizan.png"  id="praise-img"  class='animation'/></span>
+                {% else %}
+                    <span id="praise"><img src="/static/images/zan.png"  id="praise-img"  class='animation'/></span>
+                {% endif %}
+                <span id="praise-txt">{{ post.praise_count if post.praise_count else 0  }}</span>
+                <span id="add-num"><em>+1</em></span>
+            </div>
+        {% else %}
+            <div class="praise2">
+            <span id="praise2"><a href="{{ url_for("front.signin") }}"><img src="/static/images/zan.png" id="praise-img2" /></a></span>
+            <span id="praise-txt2">{{ post.praise_count if post.praise_count else 0  }}</span>
+            </div>
+        {% endif %}
+
+
+        <div class="comment-group">
+            <h3>评论列表</h3>
+            <ul class="comment-list-group">
+                {% for comment in post.comments %}
+                    <li>
+                        <div class="avatar-group">
+                            <img src="{{ comment.author.avatar or static('images/1.png/') }}" alt="">
+                        </div>
+                        <div class="comment-content">
+                            <p class="author-info">
+                                <span>{{ comment.author.username }}</span>
+                                <span>{{ comment.create_time }}</span>
+                            </p>
+                            <p class="content-text">
+                                {{ comment.content|safe }}
+                            </p>
+                        </div>
+
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="add-comment-group">
+            <h3>发表评论</h3>
+            <script id="editor" type="text/plain" style="height: 100px;" ></script>
+            <div class="comment-btn-group">
+                <button class="btn btn-primary" id="comment-btn">发表评论</button>
+            </div>
+        </div>
+    </div>
+    <div class="sm-container"></div>
+{% endblock %}

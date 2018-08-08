@@ -1,0 +1,34 @@
+{% from "commom/macros.html " import static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>404</title>
+    <style>
+        html,body,div,p,form,label,ul,li,dl,dt,dd,ol,img,button,h1,h2,h3,h4,h5,h6,b,em,strong,small{margin:0;padding:0;border:0;list-style:none;font-style:normal;font-weight:normal;}
+         body{
+            background: #e8f5fd;
+              }
+        .lost{
+            {#position: absolute;top:50%;left: 50%;margin-top: -20px;margin-left: -20px;#}
+            position:absolute; /*绝对定位*/
+            top:50%; /*距顶部50%*/
+            left:50%;
+            margin:-100px 0 0 -150px; /*设定这个div的margin-top的负值为自身的高度的一半,margin-left的值也是自身的宽度的一半的负值.(感觉在绕口令)*/
+            width:300px; /*宽为400,那么margin-top为-200px*/
+            height:200px; /*高为200那么margin-left为-100px;*/
+            z-index:99; /*浮动在最上层 */
+        }
+        .lost a{
+            margin-left: 60%;
+            text-decoration:none
+        }
+    </style>
+</head>
+<body>
+    <div class="lost">
+        <img src="{{ static("images/404.png") }}" alt="">
+        <a href="/">点击跳转到首页</a>
+    </div>
+</body>
+</html>

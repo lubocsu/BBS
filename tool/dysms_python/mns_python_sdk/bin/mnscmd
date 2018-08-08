@@ -1,0 +1,541 @@
+#!/usr/bin/env python3
+#encoding:utf-8
+# Copyright (C) 2015, Alibaba Cloud Computing
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+#The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+import os
+import sys
+import traceback
+
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser as ConfigParser
+
+from optparse import OptionParser
+import sys
+sys.path.append("..")
+from mns.mns_account import Account,AccountMeta
+from mns.mns_queue import *
+from mns.mns_topic import *
+from mns.mns_subscription import *
+from mns.mns_exception import *
+
+global CONFIGFILE
+CONFIGFILE = "%s/.mnscredentials" % os.path.expanduser('~')
+CONFIGSECTION = 'MNSCredentials'
+
+CMD_LIST = [["config"              , "config --mnsendpoint=http://$accountid.mns.cn-hangzhou.aliyuncs.com --accesskeyid=YOUR_ACCESSKEYID --accesskeysecret=YOUR_ACCESSKEYSECRET [--token=YOUR_SECURITYTOKEN]"],
+            ["setaccountattr"      , "setaccountattr [--loggingbucket=xxx]"],
+            ["getaccountattr"      , "getaccountattr"]]
+
+QUEUE_CMD_LIST = [
+            ["listqueue"           , "listqueue [--prefix=xxx] [--retnum=xxx] [--marker=xxx]"],
+            ["createqueue"         , "createqueue --queuename=xxx [--vistimeout=xxx] [--maxmsgsize=xxx] [--retentionperiod=xxx] [--delaysec=xxx] [--waitsec=xxx] [--loggingenabled=True/False]"],
+            ["setqueueattr"        , "setqueueattr --queuename=xxx [--vistimeout=xxx] [--maxmsgsize=xxx] [--retentionperiod=xxx] [--delaysec=xxx] [--waitsec=xxx] [--loggingenabled=True/False]"],
+            ["getqueueattr"        , "getqueueattr --queuename=xxx"],
+            ["deletequeue"         , "deletequeue --queuename=xxx"],
+            ["sendmessage"         , "sendmessage --queuename=xxx --body=xxx [--delaysec=xxx --priority=xxx --base64=False]"],
+            ["receivemessage"      , "receivemessage --queuename=xxx [--waitsec=xxx --base64=False]"],
+            ["peekmessage"         , "peekmessage --queuename=xxx"],
+            ["deletemessage"       , "deletemessage --queuename=xxx --handle=xxx"],
+            ["changevisibility"    , "changevisibility --queuename=xxx --handle=xxx --vistimeout=xxx"]]
+
+TOPIC_CMD_LIST = [
+            ["listtopic"           , "listtopic [--prefix=xxx] [--retnum=xxx] [--marker=xxx]"],
+            ["createtopic"         , "createtopic --topicname=xxx [--maxmsgsize=xxx] [--loggingenabled=True/False]"],
+            ["settopicattr"        , "settopicattr --topicname=xxx [--maxmsgsize=xxx] [--loggingenabled=True/False]"],
+            ["gettopicattr"        , "gettopicattr --topicname=xxx"],
+            ["deletetopic"         , "deletetopic --topicname=xxx"],
+            ["publishmessage"      , "publishmessage --topicname=xxx --body=xxx [--messagetag=xxx]"],
+            ["listsub"             , "listsub --topicname=xxx [--prefix=xxx] [--retnum=xxx] [--marker=xxx]"],
+            ["subscribe"           , "subscribe --topicname=xxx --subname=xxx --endpoint=xxx [--filtertag=xxx] [--notifystrategy=xxx|BACKOFF_RETRY/EXPONENTIAL_DECAY_RETRY] [--notifycontentformat=xxx|XML/SIMPLIFIED/JSON]"],
+            ["setsubattr"          , "setsubattr --topicname=xxx --subname=xxx [--notifystrategy=xxx|BACKOFF_RETRY/EXPONENTIAL_DECAY_RETRY]"],
+            ["getsubattr"          , "getsubattr --topicname=xxx --subname=xxx"],
+            ["unsubscribe"         , "unsubscribe --topicname=xxx --subname=xxx"]]
+
+CMD_RULES = dict(CMD_LIST)
+CMD_RULES.update(dict(QUEUE_CMD_LIST))
+CMD_RULES.update(dict(TOPIC_CMD_LIST))
+ENDPOINT = "endpoint"
+ACCESSKEYID = "accesskeyid"
+ACCESSKEYSECRET = "accesskeysecret"
+SECURITYTOKEN = "securitytoken"
+
+class MNSCmd:
+    def config(self, args, options):
+        # WARNING： Please do not hard code your accessId and accesskey in next line.(more information: https://yq.aliyun.com/articles/55947)
+        MNSCmd.miss_parameters((options.mnsendpoint is None or \
+                                options.accesskeyid is None or \
+                                options.accesskeysecret is None),
+                                args)
+        config = ConfigParser.RawConfigParser()
+        config.add_section(CONFIGSECTION)
+        config.set(CONFIGSECTION, ENDPOINT, options.mnsendpoint)
+        config.set(CONFIGSECTION, ACCESSKEYID, options.accesskeyid)
+        config.set(CONFIGSECTION, ACCESSKEYSECRET, options.accesskeysecret)
+        if options.token is not None:
+            config.set(CONFIGSECTION, SECURITYTOKEN, options.token)
+
+        cfgfile = open(CONFIGFILE, "w+")
+        config.write(cfgfile)
+        print("Your configuration is saved into %s ." % CONFIGFILE)
+        cfgfile.close()
+        import stat
+        os.chmod(CONFIGFILE, stat.S_IREAD | stat.S_IWRITE)
+
+    def setup_credentials(self, options):
+        config = ConfigParser.ConfigParser()
+        try:
+            config.read(CONFIGFILE)
+            if (options.mnsendpoint is None and not config.has_option(CONFIGSECTION, ENDPOINT)) or \
+                (options.accesskeyid is None and not config.has_option(CONFIGSECTION, ACCESSKEYID)) or \
+                (options.accesskeysecret is None and not config.has_option(CONFIGSECTION, ACCESSKEYSECRET)):
+                    print("Missing credentials in %s. Use \"mnscmd config\" to init credentials." % CONFIGFILE)
+                    sys.exit(-1)
+
+            self.mnsendpoint = options.mnsendpoint if options.mnsendpoint is not None else config.get(CONFIGSECTION, ENDPOINT)
+            self.accesskeyid = options.accesskeyid if options.accesskeyid is not None else config.get(CONFIGSECTION, ACCESSKEYID)
+            self.accesskeysecret = options.accesskeysecret if options.accesskeysecret is not None else config.get(CONFIGSECTION, ACCESSKEYSECRET)
+
+            self.token = options.token
+            if self.token is None:
+                self.token = config.get(CONFIGSECTION, SECURITYTOKEN) if config.has_option(CONFIGSECTION, SECURITYTOKEN) else ""
+            self.account = Account(self.mnsendpoint, self.accesskeyid, self.accesskeysecret, self.token)
+            self.account.set_debug(True)
+        except Exception:
+            print("Can't get credentials. Use \"mnscmd config\" to init credentials.")
+            print(traceback.print_exc())
+            sys.exit(-1)
+
+    def setaccountattr(self, args, options):
+        account_meta = MNSCmd.init_accountmeta(options)
+        try:
+            self.account.set_attributes(account_meta)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def getaccountattr(self, args, options):
+        try:
+            account_meta = self.account.get_attributes()
+            MNSCmd.cmd_succeed(args[0], "\nAccountMeta\n%s" % account_meta)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def listqueue(self, args, options):
+        prefix = "" if options.prefix is None else options.prefix
+        retnum = -1 if options.retnum is None else options.retnum
+        marker = "" if options.marker is None else options.marker
+
+        try:
+            queueurl_list, nextmarker = self.account.list_queue(prefix, retnum, marker)
+            MNSCmd.cmd_succeed(args[0])
+
+            if len(queueurl_list) == 0:
+                print("Queue not exist in this account.")
+            else:
+                print("\n".join(["QueueURL:%s" % item for item in queueurl_list]))
+                print("\nListQueueNumber:%s" % len(queueurl_list))
+            if nextmarker != "":
+                print("NextMarker:%s" % nextmarker)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def createqueue(self, args, options):
+        MNSCmd.miss_parameters(options.queuename is None, args)
+        queue = self.account.get_queue(options.queuename)
+        queue_meta = MNSCmd.init_queuemeta(options)
+
+        try:
+            queue_url = queue.create(queue_meta)
+            MNSCmd.cmd_succeed(args[0], "QueueURL:%s" % queue_url)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def setqueueattr(self, args, options):
+        MNSCmd.miss_parameters(options.queuename is None, args)
+        queue = self.account.get_queue(options.queuename)
+        queue_meta =  MNSCmd.init_queuemeta(options)
+
+        try:
+            queue.set_attributes(queue_meta)
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def getqueueattr(self, args, options):
+        MNSCmd.miss_parameters(options.queuename is None, args)
+        queue = self.account.get_queue(options.queuename)
+
+        try:
+            queue_meta = queue.get_attributes()
+            MNSCmd.cmd_succeed(args[0], "\nQueueMeta\n%s" % queue_meta)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def deletequeue(self, args, options):
+        MNSCmd.miss_parameters(options.queuename is None, args)
+        queue = self.account.get_queue(options.queuename)
+
+        try:
+            queue.delete()
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def sendmessage(self, args, options):
+        MNSCmd.miss_parameters((options.queuename is None or options.body is None), args)
+        queue = self.account.get_queue(options.queuename)
+        if options.base64 and options.base64.lower() == "false":
+            queue.set_encoding(False)
+
+        message = Message(options.body)
+        if options.delaysec is not None:
+            message.set_delayseconds(options.delaysec)
+        if options.priority is not None:
+            message.set_priority(options.priority)
+
+        try:
+            rmsg = queue.send_message(message)
+            MNSCmd.cmd_succeed(args[0])
+            MNSCmd.print_attr({"MessageID"      : rmsg.message_id,
+                               "MessageBodyMD5" : rmsg.message_body_md5})
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def receivemessage(self, args, options):
+        MNSCmd.miss_parameters(options.queuename is None, args)
+        queue = self.account.get_queue(options.queuename)
+        if options.base64 and options.base64.lower() == "false":
+            queue.set_encoding(False)
+        wait_seconds = -1 if options.waitsec is None else options.waitsec
+
+        try:
+            rmsg = queue.receive_message(wait_seconds)
+            MNSCmd.cmd_succeed(args[0])
+            MNSCmd.print_attr({ "MessageBody"       : rmsg.message_body,
+                                "MessageID"         : rmsg.message_id,
+                                "MessageBodyMD5"    : rmsg.message_body_md5,
+                                "DequeueCount"      : rmsg.dequeue_count,
+                                "EnqueueTime"       : rmsg.enqueue_time,
+                                "FirstDequeueTime"  : rmsg.first_dequeue_time,
+                                "Priority"          : rmsg.priority,
+                                "ReceiptHandle"     : rmsg.receipt_handle,
+                                "NextVisibleTime"   : rmsg.next_visible_time})
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def peekmessage(self, args, options):
+        MNSCmd.miss_parameters(options.queuename is None, args)
+        queue = self.account.get_queue(options.queuename)
+
+        try:
+            rmsg = queue.peek_message()
+            MNSCmd.cmd_succeed(args[0])
+            MNSCmd.print_attr({ "MessageBody"       : rmsg.message_body,
+                                "MessageID"         : rmsg.message_id,
+                                "MessageBodyMD5"    : rmsg.message_body_md5,
+                                "DequeueCount"      : rmsg.dequeue_count,
+                                "EnqueueTime"       : rmsg.enqueue_time,
+                                "FirstDequeueTime"  : rmsg.first_dequeue_time,
+                                "Priority"          : rmsg.priority})
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def deletemessage(self, args, options):
+        MNSCmd.miss_parameters( (options.queuename is None or options.handle is None), args)
+        queue = self.account.get_queue(options.queuename)
+
+        try:
+            queue.delete_message(options.handle)
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def changevisibility(self, args, options):
+        MNSCmd.miss_parameters((options.queuename is None or \
+                                options.handle is None or \
+                                options.vistimeout is None),
+                               args)
+        queue = self.account.get_queue(options.queuename)
+
+        try:
+            rmsg = queue.change_message_visibility(options.handle, options.vistimeout)
+            MNSCmd.cmd_succeed(args[0])
+            MNSCmd.print_attr({"ReceiptHandle"   : rmsg.receipt_handle,
+                               "NextVisibleTime" : rmsg.next_visible_time})
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def listtopic(self, args, options):
+        prefix = "" if options.prefix is None else options.prefix
+        retnum = -1 if options.retnum is None else options.retnum
+        marker = "" if options.marker is None else options.marker
+
+        try:
+            topicurl_list, nextmarker = self.account.list_topic(prefix, retnum, marker)
+            MNSCmd.cmd_succeed(args[0])
+
+            if len(topicurl_list) == 0:
+                print("Topic not exist in this account.")
+            else:
+                print("\n".join(["TopicURL:%s" % item for item in topicurl_list]))
+                print("\nListTopicNumber:%s" % len(topicurl_list))
+            if nextmarker != "":
+                print("NextMarker:%s" % nextmarker)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def createtopic(self, args, options):
+        MNSCmd.miss_parameters(options.topicname is None, args)
+        topic = self.account.get_topic(options.topicname)
+        topic_meta = MNSCmd.init_topicmeta(options)
+
+        try:
+            topic_url = topic.create(topic_meta)
+            MNSCmd.cmd_succeed(args[0], "TopicURL:%s" % topic_url)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def settopicattr(self, args, options):
+        MNSCmd.miss_parameters(options.topicname is None, args)
+        topic = self.account.get_topic(options.topicname)
+        topic_meta = MNSCmd.init_topicmeta(options)
+
+        try:
+            topic.set_attributes(topic_meta)
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def gettopicattr(self, args, options):
+        MNSCmd.miss_parameters(options.topicname is None, args)
+        topic = self.account.get_topic(options.topicname)
+
+        try:
+            topic_meta = topic.get_attributes()
+            MNSCmd.cmd_succeed(args[0], "\nTopicMeta\n%s" % topic_meta)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def deletetopic(self, args, options):
+        MNSCmd.miss_parameters(options.topicname is None, args)
+        topic = self.account.get_topic(options.topicname)
+
+        try:
+            topic.delete()
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def publishmessage(self, args, options):
+        MNSCmd.miss_parameters((options.topicname is None or options.body is None), args)
+        topic = self.account.get_topic(options.topicname)
+        message = TopicMessage(options.body, "" if options.messagetag is None else options.messagetag)
+
+        try:
+            rmsg = topic.publish_message(message)
+            MNSCmd.cmd_succeed(args[0])
+            MNSCmd.print_attr({"MessageID"      : rmsg.message_id,
+                               "MessageBodyMD5" : rmsg.message_body_md5})
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def listsub(self, args, options):
+        MNSCmd.miss_parameters(options.topicname is None, args)
+        topic = self.account.get_topic(options.topicname)
+        prefix = "" if options.prefix is None else options.prefix
+        retnum = -1 if options.retnum is None else options.retnum
+        marker = "" if options.marker is None else options.marker
+
+        try:
+            suburl_list, nextmarker = topic.list_subscription(prefix, retnum, marker)
+            MNSCmd.cmd_succeed(args[0])
+
+            if len(suburl_list) == 0:
+                print("Subscription not exist in this account.")
+            else:
+                print("\n".join(["SubscriptionURL:%s" % item for item in suburl_list]))
+                print("\nListSubscriptionNumber:%s" % len(suburl_list))
+            if nextmarker != "":
+                print("NextMarker:%s" % nextmarker)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def subscribe(self, args, options):
+        MNSCmd.miss_parameters((options.topicname is None or options.subname is None or options.endpoint is None), args)
+        subscription = self.account.get_subscription(options.topicname, options.subname)
+        subscription_meta = MNSCmd.init_subscriptionmeta(options)
+
+        try:
+            subscription_url = subscription.subscribe(subscription_meta)
+            MNSCmd.cmd_succeed(args[0], "SubscriptionURL:%s" % subscription_url)
+        except Exception as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def setsubattr(self, args, options):
+        MNSCmd.miss_parameters((options.topicname is None or options.subname is None), args)
+        subscription = self.account.get_subscription(options.topicname, options.subname)
+        subscription_meta = MNSCmd.init_subscriptionmeta(options)
+
+        try:
+            subscription.set_attributes(subscription_meta)
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def getsubattr(self, args, options):
+        MNSCmd.miss_parameters((options.topicname is None or options.subname is None), args)
+        subscription = self.account.get_subscription(options.topicname, options.subname)
+
+        try:
+            sub_meta = subscription.get_attributes()
+            MNSCmd.cmd_succeed(args[0], "\nSubscriptionMeta\n%s" % sub_meta)
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    def unsubscribe(self, args, options):
+        MNSCmd.miss_parameters((options.topicname is None or options.subname is None), args)
+        subscription = self.account.get_subscription(options.topicname, options.subname)
+
+        try:
+            subscription.unsubscribe()
+            MNSCmd.cmd_succeed(args[0])
+        except MNSExceptionBase as e:
+            MNSCmd.cmd_exception(args[0], e)
+
+    @staticmethod
+    def miss_parameters(condition, args):
+        if condition:
+            print("%s miss parameters." % args[0])
+            print_help(args[0])
+
+    @staticmethod
+    def init_accountmeta(options):
+        account_meta = AccountMeta(options.loggingbucket)
+        return account_meta
+
+    @staticmethod
+    def init_queuemeta(options):
+        queue_meta = QueueMeta()
+        if options.vistimeout is not None:
+            queue_meta.set_visibilitytimeout(options.vistimeout)
+        if options.maxmsgsize is not None:
+            queue_meta.set_maximum_message_size(options.maxmsgsize)
+        if options.retentionperiod is not None:
+            queue_meta.set_message_retention_period(options.retentionperiod)
+        if options.delaysec is not None:
+            queue_meta.set_delay_seconds(options.delaysec)
+        if options.waitsec is not None:
+            queue_meta.set_polling_wait_seconds(options.waitsec)
+        if options.loggingenabled is not None:
+            queue_meta.set_logging_enabled(options.loggingenabled)
+        return queue_meta
+
+    @staticmethod
+    def init_topicmeta(options):
+        topic_meta = TopicMeta()
+        if options.maxmsgsize is not None:
+            topic_meta.set_maximum_message_size(options.maxmsgsize)
+        if options.loggingenabled is not None:
+            topic_meta.set_logging_enabled(options.loggingenabled)
+        return topic_meta
+
+    @staticmethod
+    def init_subscriptionmeta(options):
+        subscription_meta = SubscriptionMeta()
+        if options.endpoint is not None:
+            subscription_meta.set_endpoint(options.endpoint)
+        if options.filtertag is not None:
+            subscription_meta.set_filter_tag(options.filtertag)
+        if options.notifystrategy is not None:
+            subscription_meta.set_notify_strategy(options.notifystrategy)
+        if options.notifycontentformat is not None:
+            subscription_meta.set_notify_content_format(options.notifycontentformat)
+        return subscription_meta
+
+    @staticmethod
+    def cmd_succeed(action, otherinfo=""):
+        print("%s succeed!\n%s" % (action, otherinfo))
+
+    @staticmethod
+    def cmd_exception(action, e):
+        print("%s fail!\nException:%s" % (action, e))
+
+    @staticmethod
+    def print_attr(attrMap):
+        print("\n".join(["%s:%s" % (k.ljust(30),v) for k,v in attrMap.items()]))
+
+def print_help(key = None):
+    print("===============================================")
+    if key is None:
+        print(10*"-" + "Base Command" + 10*"-")
+        print("\n".join(["%s %s" % (item[0].ljust(20),item[1]) for item in CMD_LIST]))
+        print("\n" + 10*"-" + "Queue Command" + 10*"-")
+        print("\n".join(["%s %s" % (item[0].ljust(20),item[1]) for item in QUEUE_CMD_LIST]))
+        print("\n" + 10*"-" + "Topic Command" + 10*"-")
+        print("\n".join(["%s %s" % (item[0].ljust(20),item[1]) for item in TOPIC_CMD_LIST]))
+    else:
+        print("%s helpinfo:\n%s" % (key, CMD_RULES[key]))
+    print("\n===============================================")
+    sys.exit(1)
+
+if __name__ == "__main__":
+    parser = OptionParser('''%prog args [options]''')
+    parser.add_option("-c", "--configfile", dest="configfile", help="specify config file, default: ~/.mnscredentials")
+    parser.add_option("-e", "--mnsendpoint", dest="mnsendpoint", help="specify mns endpoint, such as: mns.cn-hangzhou.aliyuncs.com")
+    parser.add_option("-a", "--accesskeyid", dest="accesskeyid", help="specify your AccessKeyId")
+    parser.add_option("-A", "--accesskeysecret", dest="accesskeysecret", help="specify your AccessKeySecret")
+    parser.add_option("-T", "--token", dest="token", help="specify your SecurityToken")
+    parser.add_option("-p", "--prefix", dest="prefix", help="specify the prefix of queue name")
+    parser.add_option("-r", "--retnum", type="int", dest="retnum", help="specify the retnum")
+    parser.add_option("-m", "--marker", dest="marker", help="specify the marker")
+    parser.add_option("-q", "--queuename", dest="queuename", help="specify queue name")
+    parser.add_option("-v", "--vistimeout", type="int", dest="vistimeout", help="specify VisibilityTimeout")
+    parser.add_option("-M", "--maxmsgsize", type="int", dest="maxmsgsize", help="specify MaximumMessageSize")
+    parser.add_option("-R", "--retentionperiod", type="int", dest="retentionperiod", help="specify MessageRetentionPeriod")
+    parser.add_option("-d", "--delaysec", type="int", dest="delaysec", help="specify DelaySeconds")
+    parser.add_option("-b", "--body", dest="body", help="specify MessageBody")
+    parser.add_option("-P", "--priority", type="int", dest="priority", help="specify Priority")
+    parser.add_option("-w", "--waitsec", type="int", dest="waitsec", help="specify WaitSeconds")
+    parser.add_option("-H", "--handle", dest="handle", help="specify ReceiptHandle")
+    parser.add_option("-i", "--info", action="store_true", dest="info", help="get more information of an action")
+    parser.add_option("-t", "--topicname", dest="topicname", help="specify topic name")
+    parser.add_option("-s", "--subname", dest="subname", help="specify subscription name")
+    parser.add_option("-E", "--endpoint", dest="endpoint", help="specify endpoint of subscription, such as: http://testendpoint or acs:mns:cn-hangzhou:2861740:queues/TestQueue...")
+    parser.add_option("-S", "--notifystrategy", dest="notifystrategy", help="specify subscription notify strategy, value:BACKOFF_RETRY/EXPONENTIAL_DECAY_RETRY")
+    parser.add_option("-f", "--notifycontentformat", dest="notifycontentformat", help="specify subscription notify content format, value:XML/SIMPLIFIED/JSON")
+    parser.add_option("-F", "--filtertag", dest="filtertag", help="specify subscription filter tag")
+    parser.add_option("-g", "--messagetag", dest="messagetag", help="specify the message tag")
+    parser.add_option("-l", "--loggingenabled", dest="loggingenabled", help="specify LoggingEnabled, value: True/False")
+    parser.add_option("-L", "--loggingbucket", dest="loggingbucket", help="specify logging bucket")
+    parser.add_option("-B", "--base64", dest="base64", help="base64 decode or encode when send or receive message , value: True/False, default: True")
+
+    (options, args) = parser.parse_args()
+    if (len(args)) < 1:
+        print_help()
+
+    if options.configfile:
+        CONFIGFILE = options.configfile
+
+    mns_cmd = MNSCmd()
+    if args[0] == "config":
+        getattr(mns_cmd, args[0])(args, options)
+        sys.exit(0)
+    else:
+        mns_cmd.setup_credentials(options)
+
+    if args[0] not in CMD_RULES.keys():
+        print("unsupported command : %s" % args[0])
+        print("use --help for more information")
+        sys.exit(1)
+
+    if options.info:
+        print_help(args[0])
+
+    getattr(mns_cmd, args[0])(args, options)

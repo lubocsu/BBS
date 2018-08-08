@@ -1,0 +1,1 @@
+from .ueditoy import bp

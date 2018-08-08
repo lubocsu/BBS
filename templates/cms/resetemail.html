@@ -1,0 +1,38 @@
+{% extends 'cms/cms_common.html' %}
+{% from 'commom/macros.html'import static %}
+{% block title -%}
+    修改邮箱
+{%- endblock %}
+{% block title_1 -%}
+    首页
+{%- endblock %}
+{% block title_2 -%}
+    {{ self.title() }}
+{%- endblock %}
+{% block head %}
+    <script src="{{ static('cms/js/resetemail.js') }}"></script>
+    <style>
+    .input-group-addon:hover{
+        background:#00a5a5;
+    }
+    </style>
+{% endblock %}
+{% block main_center %}
+    <form action="" method="post">
+        <div class="boxone">
+            <div class="form-group">
+                <div class="input-group">
+                    <input type="email" class="form-control" name="email" placeholder="新邮箱" >
+                    <span class="input-group-addon" id="send_e" style="cursor: pointer">获取验证码</span>
+                </div>
+            </div>
+            <div class="form-group">
+                    <input type="text" class="form-control" name="captcha" placeholder="获取的验证码">
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary" id="submit">立即修改</button>
+            </div>
+
+        </div>
+    </form>
+{% endblock %}

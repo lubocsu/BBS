@@ -1,0 +1,16 @@
+/*版心*/
+.main-container{
+    width: 990px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+/*大版心*/
+.lg-container{
+    width: 730px;
+    float: left;
+}
+/*小版心*/
+.sm-container{
+    width: 250px;
+    float: right;
+}

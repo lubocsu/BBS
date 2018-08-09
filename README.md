@@ -60,3 +60,47 @@ python manage.py create_cms_user -u xxx(自己设置用户名) -p xxx（自己�
 * 最后运行BBS.py这个文件，打开http://127.0.0.1:5000, 成功啦
 
 ## 网站的截图
+***CMS登录的界面***
+![cms_login](https://github.com/zjy959/BBS/blob/master/screenshots/cms_login.png)
+***CMS访问者权限主界面***
+![cms_v](https://github.com/zjy959/BBS/blob/master/screenshots/cms_v.png)
+***CMS开发者权限主界面***
+![cms_d](https://github.com/zjy959/BBS/blob/master/screenshots/cms_d.png)
+***CMS用户信息界面***
+![infor](https://github.com/zjy959/BBS/blob/master/screenshots/infor.png)
+***CMS修改邮箱界面***
+![email](https://github.com/zjy959/BBS/blob/master/screenshots/email.png)
+***弹窗***
+![弹窗](https://github.com/zjy959/BBS/blob/master/screenshots/弹窗.png)
+***帖子管理界面***
+![post](https://github.com/zjy959/BBS/blob/master/screenshots/post.png)
+***模块管理界面***
+![board](https://github.com/zjy959/BBS/blob/master/screenshots/board.png)
+***轮播图管理界面***
+![banner](https://github.com/zjy959/BBS/blob/master/screenshots/banner.png)
+***前台登录界面***
+![front_login](https://github.com/zjy959/BBS/blob/master/screenshots/fron_signin.png)
+***前台注册界面***
+![front_signup](https://github.com/zjy959/BBS/blob/master/screenshots/front_signup.png)
+***前台主界面***
+![front_index](https://github.com/zjy959/BBS/blob/master/screenshots/front_index.png)
+***发布新帖界面***
+![front_apost](https://github.com/zjy959/BBS/blob/master/screenshots/front_apost.png)
+***帖子详情界面***
+![pdata](https://github.com/zjy959/BBS/blob/master/screenshots/pdata.png)
+![pdata](https://github.com/zjy959/BBS/blob/master/screenshots/p2.png)
+***评论界面***
+![comment](https://github.com/zjy959/BBS/blob/master/screenshots/comment.png)
+
+
+
+
+
+
+
+
+
+
+
+
+

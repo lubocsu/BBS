@@ -42,3 +42,21 @@ python manage.py db init     # 创建迁移的仓库
 Python manage.py db migrate  # 创建迁移的脚本
 python manage.py db upgrade  # 更新数据库
 ```
+* 然后我们添加下后台CMS管理系统的人员
+```
+python manage.py create_cms_user -u xxx(自己设置用户名) -p xxx（自己设置密码） -e xxx@qq.com（自己设置邮箱地址）
+```
+* 给管理人员增加权限角色
+```
+我只设定了四种角色：游客，运营，管理员，和开发者，每个角色有不同的权限，具体看apps/cms/models中的CMSpermission这个类
+```
+```
+命令添加操作：python manage.py add_user_to_role -e test@qq.com（这是我当前的测试邮箱，具体根据你自己的） -n 运营（四个角色中其中一个）
+```
+* 配置邮箱，memched,celery+redis,七牛，阿里云的相关信息，百度的富文本编辑器
+```
+具体在config.py文件有详情的注释
+```
+* 最后运行BBS.py这个文件，打开http://127.0.0.1:5000, 成功啦
+
+## 网站的截图

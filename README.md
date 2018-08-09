@@ -13,4 +13,32 @@ python中PIL图形处理工具画的，验证码缓存是用的memcache,用celer
 ```
 https://github.com/zjy959/BBS.git
 ```
-* 使用pycharm安装虚拟环境
+* 安装虚拟环境
+```
+[virtualenv安装]（http://note.youdao.com/noteshareid=652c010229541f9ac8f269b97b32d907&sub=F8DD453C58AD499DAF9C5FD92FE9FAEE）
+```
+* 用pycharm打开你克隆的项目
+```
+在pycharm底部打开Terminal，然后进入到你的虚拟环境如workon my_env
+```
+```
+我们在执行这条命令：pip install -r requirements.txt
+```
+* 假定大家都安装好了MySQL，我们去创建一个databases,在mysql命令行中输入：
+```
+create database you_database_name charset urf-8;
+```
+* 修改下我们的配置文件，config中的数据库配置
+```
+HOSTNAME = '127.0.0.1'
+PORT = '3306'
+DATABASE = 'you_database_name'
+USERNAME = 'root（你的数据库用户名）'
+PASSWORD = 'root（你的数据库密码）'
+```
+* 使用Flask中强大的sqlalchemy -> Flask-Migrate；来实现数据库的迁移
+```
+python manage.py db init     # 创建迁移的仓库
+Python manage.py db migrate  # 创建迁移的脚本
+python manage.py db upgrade  # 更新数据库
+```

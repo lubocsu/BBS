@@ -13,3 +13,4 @@ python中PIL图形处理工具画的，验证码缓存是用的memcache,用celer
 ```
 https://github.com/zjy959/BBS.git
 ```
+* 使用pycharm安装虚拟环境
